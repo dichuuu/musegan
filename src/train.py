@@ -6,13 +6,15 @@ from pprint import pformat
 import numpy as np
 import scipy.stats
 import tensorflow as tf
-from musegan.config import LOGLEVEL, LOG_FORMAT
+from musegan.config import LOGLEVEL, LOG_FORMAT, FILE_LOG_FORMAT
 from musegan.data import load_data, get_dataset, get_samples
 from musegan.metrics import get_save_metric_ops
 from musegan.model import Model
 from musegan.utils import make_sure_path_exists, load_yaml
 from musegan.utils import backup_src, update_not_none, setup_loggers
+
 LOGGER = logging.getLogger("musegan.train")
+
 
 def parse_arguments():
     """Parse and return the command line arguments."""
@@ -28,6 +30,7 @@ def parse_arguments():
     args = parser.parse_args()
     return args
 
+
 def setup_dirs(config):
     """Setup an experiment directory structure and update the `params`
     dictionary with the directory paths."""
@@ -42,6 +45,7 @@ def setup_dirs(config):
     # Make sure directories exist
     for key in ('log_dir', 'model_dir', 'sample_dir', 'src_dir'):
         make_sure_path_exists(config[key])
+
 
 def setup():
     """Parse command line arguments, load model parameters, load configurations,
@@ -81,6 +85,7 @@ def setup():
 
     return params, config
 
+
 def load_training_data(params, config):
     """Load and return the training data."""
     # Load data
@@ -107,6 +112,7 @@ def load_training_data(params, config):
         train_x, train_y = dataset.make_one_shot_iterator().get_next(), None
 
     return train_x, train_y
+
 
 def load_or_create_samples(params, config):
     """Load or create the samples used as the sampler inputs."""
@@ -161,10 +167,11 @@ def load_or_create_samples(params, config):
 
     return sample_x, None, sample_z
 
+
 def main():
     """Main function."""
     # Setup
-    logging.basicConfig(level=LOGLEVEL, format=LOG_FORMAT)
+    logging.basicConfig(level=LOGLEVEL, format=FILE_LOG_FORMAT)
     params, config = setup()
     LOGGER.info("Using parameters:\n%s", pformat(params))
     LOGGER.info("Using configurations:\n%s", pformat(config))
@@ -288,8 +295,11 @@ def main():
                 n_dis_updates = 10 * config['n_dis_updates_per_gen_update']
             else:
                 n_dis_updates = config['n_dis_updates_per_gen_update']
-            for _ in range(n_dis_updates):
+            for idx in range(n_dis_updates):
+                LOGGER.info("Training Discriminator {}/{}".format(idx, n_dis_updates))
                 sess.run(train_nodes['train_ops']['dis'])
+
+            LOGGER.info("Discriminator Done, Begin training generator")
 
             # Train the generator
             log_loss_steps = config['log_loss_steps'] or 100
@@ -309,6 +319,7 @@ def main():
                     tensor_logger_values['gen_loss'],
                     tensor_logger_values['dis_loss']))
             else:
+                LOGGER.info("Begin non log run")
                 step, _ = sess.run([
                     train_nodes['gen_step'], train_nodes['train_ops']['gen']])
 
@@ -344,6 +355,7 @@ def main():
 
     LOGGER.info("Training end")
     step_logger.close()
+
 
 if __name__ == "__main__":
     main()

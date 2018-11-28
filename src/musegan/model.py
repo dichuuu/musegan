@@ -230,7 +230,7 @@ class Model:
                 if suffix:
                     return os.path.join(
                         config['result_dir'], folder_name, name,
-                        '{}_{}.{}'.format(name, str(suffix, 'utf8'), ext))
+                        '{}_{}.{}'.format(name, str(suffix), ext))
                 return os.path.join(
                     config['result_dir'], folder_name, name,
                     '{}.{}'.format(name, ext))

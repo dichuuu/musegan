@@ -6,5 +6,5 @@ is_accompaniment: false
 condition_track_idx: ~
 use_binary_neurons: false
 nets:
-  generator: default
+  generator: rasen
   discriminator: default
