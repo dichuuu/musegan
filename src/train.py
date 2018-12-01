@@ -296,7 +296,7 @@ def main():
             else:
                 n_dis_updates = config['n_dis_updates_per_gen_update']
             for idx in range(n_dis_updates):
-                LOGGER.info("Training Discriminator {}/{}".format(idx, n_dis_updates))
+                # LOGGER.info("Training Discriminator {}/{}".format(idx, n_dis_updates))
                 sess.run(train_nodes['train_ops']['dis'])
 
             LOGGER.info("Discriminator Done, Begin training generator")

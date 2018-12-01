@@ -3,7 +3,7 @@ import tensorflow as tf
 from tensorflow.nn import relu, leaky_relu, tanh, sigmoid
 from ..ops import tconv3d, tconv2d, get_normalization
 
-NORMALIZATION = 'batch_norm' # 'batch_norm', 'layer_norm'
+NORMALIZATION = 'layer_norm' # 'batch_norm', 'layer_norm'
 ACTIVATION = relu # relu, leaky_relu, tanh, sigmoid
 
 
