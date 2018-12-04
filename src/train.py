@@ -259,6 +259,7 @@ def main():
 
     # Training hooks
     global_step = tf.train.get_global_step()
+    LOGGER.info("Global Step {}".format(global_step))
     steps_per_iter = config['n_dis_updates_per_gen_update'] + 1
     hooks = [tf.train.NanTensorHook(train_nodes['loss'])]
 
@@ -279,6 +280,7 @@ def main():
 
         # Get global step value
         step = tf.train.global_step(sess, global_step)
+        LOGGER.info("Current Step {}".format(step))
         if step == 0:
             step_logger.write('# step, gen_loss, dis_loss\n')
 
@@ -289,6 +291,7 @@ def main():
 
         # Training iteration
         while step < config['steps']:
+            LOGGER.info("Updated step {}".format(step))
 
             # Train the discriminator
             if step < 10:
@@ -303,6 +306,7 @@ def main():
 
             # Train the generator
             log_loss_steps = config['log_loss_steps'] or 100
+            # if True:
             if (step + 1) % log_loss_steps == 0:
                 step, _, tensor_logger_values = sess.run([
                     train_nodes['gen_step'], train_nodes['train_ops']['gen'],
@@ -319,7 +323,6 @@ def main():
                     tensor_logger_values['gen_loss'],
                     tensor_logger_values['dis_loss']))
             else:
-                LOGGER.info("Begin non log run")
                 step, _ = sess.run([
                     train_nodes['gen_step'], train_nodes['train_ops']['gen']])
 
@@ -348,6 +351,8 @@ def main():
                     feed_dict_evaluation[placeholder_c] = np.expand_dims(
                         sample_x[..., params['condition_track_idx']], -1)
                 sess.run(save_metrics_op, feed_dict=feed_dict_evaluation)
+
+            step = tf.train.global_step(sess, global_step)
 
             # Stop training if stopping criterion suggests
             if sess.should_stop():

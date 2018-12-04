@@ -320,6 +320,7 @@ class Model:
             # --- Save pianoroll ops -------------------------------------------
             if config['collect_save_pianorolls_op']:
                 def _save_pianoroll(array, suffix, name):
+                    LOGGER.info("Saving Piano rolls")
                     filepath = _get_filepath('pianorolls', name, suffix, 'npz')
                     if 'hard_thresholding' in name:
                         array = (array > 0)
