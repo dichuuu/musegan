@@ -174,9 +174,9 @@ class Model:
                 tf.trainable_variables(scope.name + '/' + self.dis.name))
 
             # Training ops for the generator
-            # update_ops = tf.get_collection(tf.GraphKeys.UPDATE_OPS)
-            # gen_step_increment = tf.assign_add(nodes['gen_step'], 1)
-            # with tf.control_dependencies(update_ops + [gen_step_increment]):
+#             update_ops = tf.get_collection(tf.GraphKeys.UPDATE_OPS)
+            nodes['gen_step'] = tf.assign_add(nodes['gen_step'], 1)
+#             with tf.control_dependencies(update_ops + [gen_step_increment]):
             nodes['train_ops']['gen'] = gen_opt.minimize(
                 nodes['gen_loss'], global_step,
                 tf.trainable_variables(scope.name + '/' + self.gen.name))
@@ -320,7 +320,6 @@ class Model:
             # --- Save pianoroll ops -------------------------------------------
             if config['collect_save_pianorolls_op']:
                 def _save_pianoroll(array, suffix, name):
-                    LOGGER.info("Saving Piano rolls")
                     filepath = _get_filepath('pianorolls', name, suffix, 'npz')
                     if 'hard_thresholding' in name:
                         array = (array > 0)

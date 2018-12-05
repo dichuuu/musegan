@@ -1,7 +1,7 @@
 """This file defines the network architecture for the generator."""
 import tensorflow as tf
 from tensorflow.nn import relu, leaky_relu, tanh, sigmoid
-from ..ops import tconv3d, tconv2d, get_normalization
+from musegan.presets.ops import tconv3d, tconv2d, get_normalization
 
 NORMALIZATION = 'layer_norm' # 'batch_norm', 'layer_norm'
 ACTIVATION = relu # relu, leaky_relu, tanh, sigmoid
@@ -15,30 +15,26 @@ class Generator:
     def __call__(self, tensor_in, condition=None, training=None, slope=None):
         norm = get_normalization(NORMALIZATION, training)
         tconv_layer = lambda i, f, k, s: ACTIVATION(norm(tconv3d(i, f, k, s)))
+        tconv_layer2 = lambda i, f, k, s: ACTIVATION(norm(tconv2d(i, f, k, s)))
 
         with tf.variable_scope(self.name, reuse=tf.AUTO_REUSE):
 
             h = tensor_in # 64, 128
-            h = tf.tile(tf.expand_dims(h, 1), [1, 4, 1])
+            h = tf.tile(tf.expand_dims(h, 1), [1,4,1])
 
             # RNN modified by Johnny Young
             with tf.variable_scope('RNN'):
-                cell = tf.nn.rnn_cell.LSTMCell(num_units=128, state_is_tuple=False)
-                # lstm_init_value = tf.placeholder(
-                #     tf.float32,
-                #     shape=(None, 2 * 128),
-                #     name="lstm_init_value"
-                # )
+                cell = tf.nn.rnn_cell.LSTMCell(256)
                 initial_state = cell.zero_state(64, dtype=tf.float32)
-                h, state = tf.nn.dynamic_rnn(cell,
-                                             h,
-                                             initial_state=initial_state,
-                                             dtype=tf.float32) # 64, 4, 128
+                h, state = tf.nn.dynamic_rnn(cell, h,
+                                   initial_state=initial_state,
+                                   dtype=tf.float32) # 64, 4, 128
 
+            h = norm(h)
             h = tf.expand_dims(tf.expand_dims(h, 2), 2) # 4, 1, 1
 
             # Shared network
-            with tf.variable_scope('shared'):
+            with tf.variable_scope('shared1'):
                 h = tconv_layer(h, 256, (1, 4, 3), (1, 4, 3))        # 4, 4, 3
                 h = tconv_layer(h, 128, (1, 4, 3), (1, 4, 2))        # 4, 16, 7
 

@@ -12,9 +12,7 @@ from musegan.metrics import get_save_metric_ops
 from musegan.model import Model
 from musegan.utils import make_sure_path_exists, load_yaml
 from musegan.utils import backup_src, update_not_none, setup_loggers
-
 LOGGER = logging.getLogger("musegan.train")
-
 
 def parse_arguments():
     """Parse and return the command line arguments."""
@@ -30,7 +28,6 @@ def parse_arguments():
     args = parser.parse_args()
     return args
 
-
 def setup_dirs(config):
     """Setup an experiment directory structure and update the `params`
     dictionary with the directory paths."""
@@ -45,7 +42,6 @@ def setup_dirs(config):
     # Make sure directories exist
     for key in ('log_dir', 'model_dir', 'sample_dir', 'src_dir'):
         make_sure_path_exists(config[key])
-
 
 def setup():
     """Parse command line arguments, load model parameters, load configurations,
@@ -85,7 +81,6 @@ def setup():
 
     return params, config
 
-
 def load_training_data(params, config):
     """Load and return the training data."""
     # Load data
@@ -112,7 +107,6 @@ def load_training_data(params, config):
         train_x, train_y = dataset.make_one_shot_iterator().get_next(), None
 
     return train_x, train_y
-
 
 def load_or_create_samples(params, config):
     """Load or create the samples used as the sampler inputs."""
@@ -166,7 +160,6 @@ def load_or_create_samples(params, config):
         sample_x = None
 
     return sample_x, None, sample_z
-
 
 def main():
     """Main function."""
@@ -259,7 +252,6 @@ def main():
 
     # Training hooks
     global_step = tf.train.get_global_step()
-    LOGGER.info("Global Step {}".format(global_step))
     steps_per_iter = config['n_dis_updates_per_gen_update'] + 1
     hooks = [tf.train.NanTensorHook(train_nodes['loss'])]
 
@@ -280,7 +272,6 @@ def main():
 
         # Get global step value
         step = tf.train.global_step(sess, global_step)
-        LOGGER.info("Current Step {}".format(step))
         if step == 0:
             step_logger.write('# step, gen_loss, dis_loss\n')
 
@@ -291,22 +282,20 @@ def main():
 
         # Training iteration
         while step < config['steps']:
-            LOGGER.info("Updated step {}".format(step))
+            LOGGER.info("Step: {}".format(step))
 
             # Train the discriminator
+            LOGGER.info("Training Dis")
             if step < 10:
                 n_dis_updates = 10 * config['n_dis_updates_per_gen_update']
             else:
                 n_dis_updates = config['n_dis_updates_per_gen_update']
-            for idx in range(n_dis_updates):
-                # LOGGER.info("Training Discriminator {}/{}".format(idx, n_dis_updates))
+            for _ in range(n_dis_updates):
                 sess.run(train_nodes['train_ops']['dis'])
 
-            LOGGER.info("Discriminator Done, Begin training generator")
-
             # Train the generator
+            LOGGER.info("Training Gen")
             log_loss_steps = config['log_loss_steps'] or 100
-            # if True:
             if (step + 1) % log_loss_steps == 0:
                 step, _, tensor_logger_values = sess.run([
                     train_nodes['gen_step'], train_nodes['train_ops']['gen'],
@@ -352,15 +341,12 @@ def main():
                         sample_x[..., params['condition_track_idx']], -1)
                 sess.run(save_metrics_op, feed_dict=feed_dict_evaluation)
 
-            step = tf.train.global_step(sess, global_step)
-
             # Stop training if stopping criterion suggests
             if sess.should_stop():
                 break
 
     LOGGER.info("Training end")
     step_logger.close()
-
 
 if __name__ == "__main__":
     main()
